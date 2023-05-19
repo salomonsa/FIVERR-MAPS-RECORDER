@@ -9,6 +9,7 @@ import time
 from moviepy.video.compositing.concatenate import concatenate_videoclips
 import moviepy.video.fx.all as vfx
 import moviepy.editor as me
+change_settings({"IMAGEMAGICK_BINARY":r"/usr/local/Cellar/imagemagick/7.1.1-8_1/bin/convert"})
 SCREENSHOTS_DURATION=4
 
 with sync_playwright() as playwright:
