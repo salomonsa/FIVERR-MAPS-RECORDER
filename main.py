@@ -3,9 +3,9 @@ from playwright.sync_api import sync_playwright, ViewportSize
 from moviepy.editor import *
 from moviepy.video.io.ffmpeg_tools import ffmpeg_extract_subclip
 from playwright.sync_api import Playwright, sync_playwright, expect, TimeoutError as PlaywrightTimeoutError
-import cv2
 import keyboard
 import time
+import csv
 from moviepy.video.compositing.concatenate import concatenate_videoclips
 import moviepy.video.fx.all as vfx
 import moviepy.editor as me
@@ -160,7 +160,13 @@ if len(tscreenshots)>1:
             prealfas.append(image)
         elif (i==len(tscreenshots)-1):
             prealfas.append(beta.subclip(tscreenshots[i],duration))
-
+    with open('./timestamps.csv, 'w+') as f:
+        for i,t in enumerate(tscreenshots):
+            if i==0:
+                pass
+            else:
+                f.write(str(t)+","+str(SCREENSHOTS_DURATION))
+                f.write("\n")
     final=concatenate_videoclips(prealfas)
     final.write_videofile(out_loc)
 else:
@@ -168,5 +174,6 @@ else:
         beta.write_videofile(out_loc)
     else:
         print("You didn't start recording")
+
 clip.close()
 os.remove(in_loc)
