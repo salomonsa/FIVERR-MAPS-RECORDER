@@ -54,6 +54,7 @@ with sync_playwright() as playwright:
     timeside.append(0.0)
     finished=False
     side=False
+    coords=[]
     while True:
         try:
             if (keyboard.is_pressed("r") or keyboard.is_pressed("R")) and recording==False:
@@ -94,6 +95,7 @@ with sync_playwright() as playwright:
                 for i in range(first,last):
                     coordinates=coordinates+page.url[i]
                 print(coordinates)    
+                coords.append(coordinates)
                 time.sleep(0.7)
             elif page.get_by_role("button", name="Collapse side panel").is_visible() and not side and recording:
                 side=True
@@ -167,6 +169,10 @@ if len(tscreenshots)>1:
             else:
                 f.write(str(t)+","+str(SCREENSHOTS_DURATION))
                 f.write("\n")
+    with open('./coordinates.txt, 'w+') as f:
+        for coord in coords:
+            f.write(str(coord))
+            f.write("\n")
     final=concatenate_videoclips(prealfas)
     final.write_videofile(out_loc)
 else:
