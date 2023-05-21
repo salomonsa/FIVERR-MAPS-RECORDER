@@ -1,4 +1,5 @@
 from moviepy.editor import VideoFileClip
+from moviepy.config import change_settings
 from playwright.sync_api import sync_playwright, ViewportSize
 from moviepy.editor import *
 from moviepy.video.io.ffmpeg_tools import ffmpeg_extract_subclip
