@@ -9,6 +9,7 @@ import csv
 from moviepy.video.compositing.concatenate import concatenate_videoclips
 import moviepy.video.fx.all as vfx
 import moviepy.editor as me
+import datetime
 change_settings({"IMAGEMAGICK_BINARY":r"/usr/local/Cellar/imagemagick/7.1.1-8_1/bin/convert"})
 SCREENSHOTS_DURATION=4
 
@@ -162,12 +163,13 @@ if len(tscreenshots)>1:
             prealfas.append(image)
         elif (i==len(tscreenshots)-1):
             prealfas.append(beta.subclip(tscreenshots[i],duration))
-    with open('./timestamps.csv, 'w+') as f:
+    with open('./spreadsheets/timestamps.csv, 'w+') as f:
         for i,t in enumerate(tscreenshots):
             if i==0:
                 pass
             else:
-                f.write(str(t)+","+str(SCREENSHOTS_DURATION))
+                time=str(datetime.timedelta(seconds=t))
+                f.write(time+","+str(SCREENSHOTS_DURATION))
                 f.write("\n")
     with open('./coordinates.txt, 'w+') as f:
         for coord in coords:
