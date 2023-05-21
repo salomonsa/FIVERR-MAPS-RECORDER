@@ -60,7 +60,7 @@ with sync_playwright() as playwright:
     while True:
         try:
             if (keyboard.is_pressed("r") or keyboard.is_pressed("R")) and recording==False:
-                st=time.perf_counter()
+                st=time.perf_counter()-1.2
                 print("\nStarted recording")
                 recording=True
                 recorded=True
@@ -74,7 +74,7 @@ with sync_playwright() as playwright:
             elif keyboard.is_pressed('space') and recording==True:
                 time_pause.append(time.perf_counter()-st)
                 if(len(time_pause)%2==0):
-                    print("Recording paussed")
+                    print("Recording paussed at "+ str(time.perf_counter()-st))
                 elif(len(time_pause)%2!=0):
                     print("Recording resumed")
                 time.sleep(0.7)
@@ -123,7 +123,6 @@ out_loc = 'output/du_out.mp4'
 
 # Import video clip
 clip = VideoFileClip(in_loc)
-clip = clip.set_fps(30)
 duration=clip.duration
 clip=clip.subclip(duration-timestamp,duration)
 duration=clip.duration
@@ -145,15 +144,24 @@ for i,pause in enumerate(timeside):
         subclips.append(clip.subclip(timeside[i],timeside[i+1]).fx(vfx.crop, x1=480))
 clip=concatenate_videoclips(subclips)
 subclips=[]
+sumframe=0
+k=0
 for i,pause in enumerate(time_pause):
     if(i==len(time_pause)-1):
         if(i%2==0):
             subclips.append(clip.subclip(time_pause[i],duration))
     elif(i%2==0):
         subclips.append(clip.subclip(time_pause[i],time_pause[i+1]))
+    elif(i%2!=0):
+        sumframe=sumframe+time_pause[i+1]-time_pause[i]
+        while tscreenshots[k]<time_pause[i+1] and k<len(tscreenshots)-1:
+            k=k+1
+            tscreenshots[k]=tscreenshots[k]-sumframe
+
 
 
 beta=concatenate_videoclips(subclips, method= "compose")
+duration=beta.duration
 prealfas=[]
 if len(tscreenshots)>1:
     for i,t in enumerate(tscreenshots):
