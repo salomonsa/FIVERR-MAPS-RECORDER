@@ -202,7 +202,7 @@ while not nodelay:
         if not (l == "Yes" or l == "No" or l == "no" or l == "yes"):
             print("Invalid input")
     if l == "Yes" or l == "yes":
-        lag=int(input("How many seconds of lag are there? Type a negative number if you want the timestamps to go forward instead of backwards: "))
+        lag=float(input("How many seconds of lag are there? Type a negative number if you want the timestamps to go forward instead of backwards: "))
         timestamp=timestamp+lag
     else:
         break
