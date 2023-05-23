@@ -60,11 +60,11 @@ with sync_playwright() as playwright:
     while True:
         try:
             if (keyboard.is_pressed("r") or keyboard.is_pressed("R")) and recording==False:
-                st=time.perf_counter()-1.2
+                st=time.perf_counter()
                 print("\nStarted recording")
                 recording=True
                 recorded=True
-                time.sleep(0.7)
+                
 
             elif keyboard.is_pressed('Esc'):
                 print("\nEnded recording")
@@ -111,86 +111,101 @@ with sync_playwright() as playwright:
             pass
         
     
+    
+    context.close()
+    browser.close()
     tt=time.perf_counter()
     print("tt:"+str(tt)+"st:"+str(st)+"ft:"+str((tt-st)))
     timestamp=tt-st
-    context.close()
-    browser.close()
-
-archivos = os.listdir('videos/')
-in_loc = "videos/"+archivos[0]
-out_loc = 'output/du_out.mp4'
-
-# Import video clip
-clip = VideoFileClip(in_loc)
-duration=clip.duration
-clip=clip.subclip(duration-timestamp,duration)
-duration=clip.duration
-subclips=[]
-i=0
-for i,pause in enumerate(timeside):
-    if(i==len(timeside)-1):
-        if i==0:
-            subclips.append(clip.subclip(timeside[i],duration))
-        elif(i%2!=0):
-            subclips.append(clip.subclip(timeside[i],duration).fx(vfx.crop, x1=480))
-        elif(i%2==0):
-            subclips.append(clip.subclip(timeside[i],duration))
-    elif i==0:
-        subclips.append(clip.subclip(timeside[i],timeside[i+1]))
-    elif i%2==0:
-        subclips.append(clip.subclip(timeside[i],timeside[i+1]))
-    elif i%2!=0:
-        subclips.append(clip.subclip(timeside[i],timeside[i+1]).fx(vfx.crop, x1=480))
-clip=concatenate_videoclips(subclips)
-subclips=[]
-sumframe=0
-k=0
-for i,pause in enumerate(time_pause):
-    if(i==len(time_pause)-1):
-        if(i%2==0):
-            subclips.append(clip.subclip(time_pause[i],duration))
-    elif(i%2==0):
-        subclips.append(clip.subclip(time_pause[i],time_pause[i+1]))
-    elif(i%2!=0):
-        sumframe=sumframe+time_pause[i+1]-time_pause[i]
-        while tscreenshots[k]<time_pause[i+1] and k<len(tscreenshots)-1:
-            k=k+1
-            tscreenshots[k]=tscreenshots[k]-sumframe
 
 
+nodelay=False
 
-beta=concatenate_videoclips(subclips, method= "compose")
-duration=beta.duration
-prealfas=[]
-if len(tscreenshots)>1:
-    for i,t in enumerate(tscreenshots):
-        if(i<len(tscreenshots)-1):
-            prealfas.append(beta.subclip(tscreenshots[i],tscreenshots[i+1]))
-            beta.save_frame("./frames/frame"+str(i+1)+".png", t = tscreenshots[i+1])
-            image=me.ImageClip("./frames/frame"+str(i+1)+".png").set_duration(SCREENSHOTS_DURATION).resize(width=1280,height=720)
-            prealfas.append(image)
-        elif (i==len(tscreenshots)-1):
-            prealfas.append(beta.subclip(tscreenshots[i],duration))
-    with open('./spreadsheets/timestamps.csv', 'w+') as f:
-        for i,t in enumerate(tscreenshots):
+while not nodelay:
+    archivos = os.listdir('videos/')
+    in_loc = "videos/"+archivos[0]
+    out_loc = 'output/du_out.mp4'
+
+    # Import video clip
+    clip = VideoFileClip(in_loc)
+    duration=clip.duration
+    clip=clip.subclip(duration-timestamp,duration)
+    duration=clip.duration
+    subclips=[]
+    i=0
+    for i,pause in enumerate(timeside):
+        if(i==len(timeside)-1):
             if i==0:
-                pass
-            else:
-                time=str(datetime.timedelta(seconds=t))
-                f.write(time+","+str(SCREENSHOTS_DURATION))
-                f.write("\n")
-    with open('./coordinates.txt', 'w+') as f:
-        for coord in coords:
-            f.write(str(coord))
-            f.write("\n")
-    final=concatenate_videoclips(prealfas)
-    final.write_videofile(out_loc)
-else:
-    if recorded:
-        beta.write_videofile(out_loc)
-    else:
-        print("You didn't start recording")
+                subclips.append(clip.subclip(timeside[i],duration))
+            elif(i%2!=0):
+                subclips.append(clip.subclip(timeside[i],duration).fx(vfx.crop, x1=480))
+            elif(i%2==0):
+                subclips.append(clip.subclip(timeside[i],duration))
+        elif i==0:
+            subclips.append(clip.subclip(timeside[i],timeside[i+1]))
+        elif i%2==0:
+            subclips.append(clip.subclip(timeside[i],timeside[i+1]))
+        elif i%2!=0:
+            subclips.append(clip.subclip(timeside[i],timeside[i+1]).fx(vfx.crop, x1=480))
+    clip=concatenate_videoclips(subclips)
+    subclips=[]
+    sumframe=0
+    k=0
+    for i,pause in enumerate(time_pause):
+        if(i==len(time_pause)-1):
+            if(i%2==0):
+                subclips.append(clip.subclip(time_pause[i],duration))
+        elif(i%2==0):
+            subclips.append(clip.subclip(time_pause[i],time_pause[i+1]))
+        elif(i%2!=0):
+            sumframe=sumframe+time_pause[i+1]-time_pause[i]
+            while tscreenshots[k]<time_pause[i+1] and k<len(tscreenshots)-1:
+                k=k+1
+                tscreenshots[k]=tscreenshots[k]-sumframe
 
+
+
+    beta=concatenate_videoclips(subclips, method= "compose")
+    duration=beta.duration
+    prealfas=[]
+    if len(tscreenshots)>1:
+        for i,t in enumerate(tscreenshots):
+            if(i<len(tscreenshots)-1):
+                prealfas.append(beta.subclip(tscreenshots[i],tscreenshots[i+1]))
+                beta.save_frame("./frames/frame"+str(i+1)+".png", t = tscreenshots[i+1])
+                image=me.ImageClip("./frames/frame"+str(i+1)+".png").set_duration(SCREENSHOTS_DURATION).resize(width=1280,height=720)
+                prealfas.append(image)
+            elif (i==len(tscreenshots)-1):
+                prealfas.append(beta.subclip(tscreenshots[i],duration))
+        with open('./spreadsheets/timestamps.csv', 'w+') as f:
+            for i,t in enumerate(tscreenshots):
+                if i==0:
+                    pass
+                else:
+                    time=str(datetime.timedelta(seconds=t))
+                    f.write(time+","+str(SCREENSHOTS_DURATION))
+                    f.write("\n")
+        with open('./coordinates.txt', 'w+') as f:
+            for coord in coords:
+                f.write(str(coord))
+                f.write("\n")
+        final=concatenate_videoclips(prealfas)
+        final.write_videofile(out_loc)
+    else:
+        if recorded:
+            beta.write_videofile(out_loc)
+        else:
+            print("You didn't start recording")
+    l=""
+    while not (l == "Yes" or l == "No" or l == "no" or l == "yes"):
+        l=input("Video is ready. Check the output folder and type 'Yes' if there's lag in the video or type 'No' if not: ")
+        if not (l == "Yes" or l == "No" or l == "no" or l == "yes"):
+            print("Invalid input")
+    if l == "Yes" or l == "yes":
+        lag=int(input("How many seconds of lag are there? Type a negative number if you want the timestamps to go forward instead of backwards: "))
+        timestamp=timestamp+lag
+    else:
+        break
+    
 clip.close()
 os.remove(in_loc)
