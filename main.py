@@ -74,13 +74,13 @@ with sync_playwright() as playwright:
             elif keyboard.is_pressed('space') and recording==True:
                 time_pause.append(time.perf_counter()-st)
                 if(len(time_pause)%2==0):
-                    print("Recording paussed at "+ str(time.perf_counter()-st))
+                    print("Recording paused")
                 elif(len(time_pause)%2!=0):
                     print("Recording resumed")
                 time.sleep(0.7)
             elif (keyboard.is_pressed('P') or keyboard.is_pressed('p')):
                 tscreenshots.append(time.perf_counter()-st)
-                print("\nScreenshot at "+str(int(time.perf_counter())-int(st)))
+                print("\nScreenshot")
                 i=0
              
                 for j,char in enumerate(page.url):
@@ -115,7 +115,6 @@ with sync_playwright() as playwright:
     context.close()
     browser.close()
     tt=time.perf_counter()
-    print("tt:"+str(tt)+"st:"+str(st)+"ft:"+str((tt-st)))
     timestamp=tt-st
 
 
@@ -182,7 +181,7 @@ while not nodelay:
                 if i==0:
                     pass
                 else:
-                    time=str(datetime.timedelta(seconds=t))
+                    time=str(datetime.timedelta(seconds=t+(i-1)*SCREENSHOTS_DURATION))
                     f.write(time+","+str(SCREENSHOTS_DURATION))
                     f.write("\n")
         with open('./coordinates.txt', 'w+') as f:
@@ -202,7 +201,7 @@ while not nodelay:
         if not (l == "Yes" or l == "No" or l == "no" or l == "yes"):
             print("Invalid input")
     if l == "Yes" or l == "yes":
-        lag=float(input("How many seconds of lag are there? Type a negative number if you want the timestamps to go forward instead of backwards: "))
+        lag=int(input("How many seconds of lag are there? Type a negative number if you want the timestamps to go forward instead of backwards: "))
         timestamp=timestamp+lag
     else:
         break
