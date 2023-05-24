@@ -201,8 +201,10 @@ while not nodelay:
         if not (l == "Yes" or l == "No" or l == "no" or l == "yes"):
             print("Invalid input")
     if l == "Yes" or l == "yes":
-        lag=int(input("How many seconds of lag are there? Type a negative number if you want the timestamps to go forward instead of backwards: "))
-        timestamp=timestamp+lag
+        for i,t in enumerate(tscreenshots):
+            if i!=0:
+                lag=float(input("How many seconds of lag are there at "+str(datetime.timedelta(seconds=t+(i-1)*SCREENSHOTS_DURATION))+"? Type a negative number if you want the timestamp to go forward instead of backwards: "))
+                tscreenshots[i]=tscreenshots[i]-lag
     else:
         break
     
