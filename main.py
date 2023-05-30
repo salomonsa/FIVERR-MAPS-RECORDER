@@ -145,7 +145,7 @@ out_loc = 'output/du_out.mp4'
 
 # Import video clip
 clip = VideoFileClip(in_loc)
-clip=clip.fx(vfx.crop, y1=102,y2=1000,x1=8,x2=1602).set_fps(15)
+clip=clip.fx(vfx.crop, y1=81,y2=802,x1=7,x2=1289).set_fps(15)
 clip=clip.resize(width=1280,height=720)
 duration=clip.duration
 subclips=[]
