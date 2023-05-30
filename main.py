@@ -11,6 +11,11 @@ from moviepy.video.compositing.concatenate import concatenate_videoclips
 import moviepy.video.fx.all as vfx
 import moviepy.editor as me
 import datetime
+import cv2
+import numpy as np
+import pyautogui
+import pygetwindow as gw
+
 change_settings({"IMAGEMAGICK_BINARY":r"c:\Program Files\ImageMagick"})
 SCREENSHOTS_DURATION=4
 
@@ -22,8 +27,6 @@ with sync_playwright() as playwright:
     browser = playwright.chromium.launch(headless=False, channel="chrome")
     if os.path.exists("./data/state.json"):
         context = browser.new_context(
-            record_video_dir="videos/",
-            record_video_size={"width": 1280, "height": 720},
             storage_state="./data/state.json"
         )
         page = context.new_page()
@@ -38,8 +41,6 @@ with sync_playwright() as playwright:
         browser.close()
         browser = playwright.chromium.launch(headless=False, channel="chrome")
         context = browser.new_context(
-            record_video_dir="videos/",
-            record_video_size={"width": 1280, "height": 720},
             storage_state="./data/state.json"
         )
         page = context.new_page()
@@ -57,156 +58,144 @@ with sync_playwright() as playwright:
     finished=False
     side=False
     coords=[]
+    #'Google Maps - Google Chrome'
+    # define the codec
+    fourcc = cv2.VideoWriter_fourcc('m','p','4','v')
+    # frames per second
+    fps = 15
+    # search for the window, getting the first matched window with the title
+    w = gw.getWindowsWithTitle('Google Maps - Google Chrome')[0]
+    out = cv2.VideoWriter("output.mp4", fourcc, fps, tuple(w.size))
+    seconds=0.0
     while True:
-        try:
-            if (keyboard.is_pressed("r") or keyboard.is_pressed("R")) and recording==False:
-                st=time.perf_counter()
+        while not recording:
+            if keyboard.is_pressed("r") or keyboard.is_pressed("R"):
                 print("\nStarted recording")
                 recording=True
                 recorded=True
-                
+            if keyboard.is_pressed('space'):
+                print("Recording resumed")
+                recording=True
+                time.sleep(0.2)
+            if keyboard.is_pressed('Esc'):
+                    print("\nEnded recording")
+                    finished=True
+                    break
+        while recording:
+            seconds=seconds+1/15
+            img = pyautogui.screenshot(region=(w.left, w.top, w.width, w.height))
+            # convert these pixels to a proper numpy array to work with OpenCV
+            frame = np.array(img)
+            # convert colors from BGR to RGB
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            # write the frame
+            out.write(frame)
+            try:
+                if keyboard.is_pressed('Esc'):
+                    print("\nEnded recording")
+                    finished=True
+                    break
 
-            elif keyboard.is_pressed('Esc'):
-                print("\nEnded recording")
-                finished=True
-                break
-
-            elif keyboard.is_pressed('space') and recording==True:
-                time_pause.append(time.perf_counter()-st)
-                if(len(time_pause)%2==0):
+                if keyboard.is_pressed('space'):
+                    recording=False
                     print("Recording paused")
-                elif(len(time_pause)%2!=0):
-                    print("Recording resumed")
-                time.sleep(0.7)
-            elif (keyboard.is_pressed('P') or keyboard.is_pressed('p')):
-                tscreenshots.append(time.perf_counter()-st)
-                print("\nScreenshot")
-                i=0
-             
-                for j,char in enumerate(page.url):
-                    if i==2:
-                        break
-                    if page.url[j]==",":
-                        i=i+1
-                    last=j
-                first=last
-                while page.url[first]!="@":
-                    first=first-1
-                first=first+1
-                coordinates=""
-                for i in range(first,last):
-                    coordinates=coordinates+page.url[i]
-                print(coordinates)    
-                coords.append(coordinates)
-                time.sleep(0.7)
-            elif page.get_by_role("button", name="Collapse side panel").is_visible() and not side and recording:
-                side=True
-                timeside.append(time.perf_counter()-st-1.2)
-            elif side and not page.get_by_role("button", name="Collapse side panel").is_visible() and recording:
-                side=False
-                timeside.append(time.perf_counter()-st-1.2)
-            with page.expect_navigation(timeout=1):
+                    time.sleep(0.2)
+                if (keyboard.is_pressed("P") or keyboard.is_pressed("p")):
+                    tscreenshots.append(seconds)
+                    print("\nScreenshot")
+                    i=0
+                
+                    for j,char in enumerate(page.url):
+                        if i==2:
+                            break
+                        if page.url[j]==",":
+                            i=i+1
+                        last=j
+                    first=last
+                    while page.url[first]!="@":
+                        first=first-1
+                    first=first+1
+                    coordinates=""
+                    for i in range(first,last):
+                        coordinates=coordinates+page.url[i]
+                    print(coordinates)    
+                    coords.append(coordinates)
+                    time.sleep(0.2)
+                elif page.get_by_role("button", name="Collapse side panel").is_visible() and not side:
+                    side=True
+                    timeside.append(seconds)
+                elif side and not page.get_by_role("button", name="Collapse side panel").is_visible():
+                    side=False
+                    timeside.append(seconds)
+                with page.expect_navigation(timeout=0.0000001):
+                    pass
+            except PlaywrightTimeoutError:
                 pass
-        except PlaywrightTimeoutError:
-            pass
-        
-    
-    
+        if finished:
+            break
+    out.release()
     context.close()
     browser.close()
-    tt=time.perf_counter()
-    timestamp=tt-st
+    
 
 
-nodelay=False
 
-while not nodelay:
-    archivos = os.listdir('videos/')
-    in_loc = "videos/"+archivos[0]
-    out_loc = 'output/du_out.mp4'
+in_loc = "output.mp4"
+out_loc = 'output/du_out.mp4'
 
-    # Import video clip
-    clip = VideoFileClip(in_loc)
-    duration=clip.duration
-    clip=clip.subclip(duration-timestamp,duration)
-    duration=clip.duration
-    subclips=[]
-    i=0
-    for i,pause in enumerate(timeside):
-        if(i==len(timeside)-1):
-            if i==0:
-                subclips.append(clip.subclip(timeside[i],duration))
-            elif(i%2!=0):
-                subclips.append(clip.subclip(timeside[i],duration).fx(vfx.crop, x1=480))
-            elif(i%2==0):
-                subclips.append(clip.subclip(timeside[i],duration))
-        elif i==0:
-            subclips.append(clip.subclip(timeside[i],timeside[i+1]))
-        elif i%2==0:
-            subclips.append(clip.subclip(timeside[i],timeside[i+1]))
-        elif i%2!=0:
-            subclips.append(clip.subclip(timeside[i],timeside[i+1]).fx(vfx.crop, x1=480))
-    clip=concatenate_videoclips(subclips)
-    subclips=[]
-    sumframe=0
-    k=0
-    for i,pause in enumerate(time_pause):
-        if(i==len(time_pause)-1):
-            if(i%2==0):
-                subclips.append(clip.subclip(time_pause[i],duration))
-        elif(i%2==0):
-            subclips.append(clip.subclip(time_pause[i],time_pause[i+1]))
+# Import video clip
+clip = VideoFileClip(in_loc)
+clip=clip.fx(vfx.crop, y1=102,y2=1000,x1=8,x2=1602).set_fps(15)
+clip=clip.resize(width=1280,height=720)
+duration=clip.duration
+subclips=[]
+i=0
+for i,pause in enumerate(timeside):
+    if(i==len(timeside)-1):
+        if i==0:
+            subclips.append(clip.subclip(timeside[i],duration))
         elif(i%2!=0):
-            sumframe=sumframe+time_pause[i+1]-time_pause[i]
-            while tscreenshots[k]<time_pause[i+1] and k<len(tscreenshots)-1:
-                k=k+1
-                tscreenshots[k]=tscreenshots[k]-sumframe
-
-
-
-    beta=concatenate_videoclips(subclips, method= "compose")
-    duration=beta.duration
-    prealfas=[]
-    if len(tscreenshots)>1:
+            subclips.append(clip.subclip(timeside[i],duration).fx(vfx.crop, x1=480).set_fps(15))
+        elif(i%2==0):
+            subclips.append(clip.subclip(timeside[i],duration))
+    elif i==0:
+        subclips.append(clip.subclip(timeside[i],timeside[i+1]))
+    elif i%2==0:
+        subclips.append(clip.subclip(timeside[i],timeside[i+1]))
+    elif i%2!=0:
+        subclips.append(clip.subclip(timeside[i],timeside[i+1]).fx(vfx.crop, x1=480).set_fps(15))
+beta=concatenate_videoclips(subclips, method='compose')
+duration=beta.duration
+prealfas=[]
+if len(tscreenshots)>1:
+    for i,t in enumerate(tscreenshots):
+        if(i<len(tscreenshots)-1):
+            prealfas.append(beta.subclip(tscreenshots[i],tscreenshots[i+1]))
+            beta.save_frame("./frames/frame"+str(i+1)+".png", t = tscreenshots[i+1])
+            image=me.ImageClip("./frames/frame"+str(i+1)+".png").set_duration(SCREENSHOTS_DURATION)
+            prealfas.append(image)
+        elif (i==len(tscreenshots)-1):
+            prealfas.append(beta.subclip(tscreenshots[i],duration))
+    with open('./spreadsheets/timestamps.csv', 'w+') as f:
         for i,t in enumerate(tscreenshots):
-            if(i<len(tscreenshots)-1):
-                prealfas.append(beta.subclip(tscreenshots[i],tscreenshots[i+1]))
-                beta.save_frame("./frames/frame"+str(i+1)+".png", t = tscreenshots[i+1])
-                image=me.ImageClip("./frames/frame"+str(i+1)+".png").set_duration(SCREENSHOTS_DURATION).resize(width=1280,height=720)
-                prealfas.append(image)
-            elif (i==len(tscreenshots)-1):
-                prealfas.append(beta.subclip(tscreenshots[i],duration))
-        with open('./spreadsheets/timestamps.csv', 'w+') as f:
-            for i,t in enumerate(tscreenshots):
-                if i==0:
-                    pass
-                else:
-                    time=str(datetime.timedelta(seconds=t+(i-1)*SCREENSHOTS_DURATION))
-                    f.write(time+","+str(SCREENSHOTS_DURATION))
-                    f.write("\n")
-        with open('./coordinates.txt', 'w+') as f:
-            for coord in coords:
-                f.write(str(coord))
+            if i==0:
+                pass
+            else:
+                time=str(datetime.timedelta(seconds=t+(i-1)*SCREENSHOTS_DURATION))
+                f.write(time+","+str(SCREENSHOTS_DURATION))
                 f.write("\n")
-        final=concatenate_videoclips(prealfas)
-        final.write_videofile(out_loc)
+    with open('./coordinates.txt', 'w+') as f:
+        for coord in coords:
+            f.write(str(coord))
+            f.write("\n")
+    final=concatenate_videoclips(prealfas)
+    final.write_videofile(out_loc)
+else:
+    if recorded:
+        beta.write_videofile(out_loc)
     else:
-        if recorded:
-            beta.write_videofile(out_loc)
-        else:
-            print("You didn't start recording")
-    l=""
-    while not (l == "Yes" or l == "No" or l == "no" or l == "yes"):
-        l=input("Video is ready. Check the output folder and type 'Yes' if there's lag in the video or type 'No' if not: ")
-        if not (l == "Yes" or l == "No" or l == "no" or l == "yes"):
-            print("Invalid input")
-    if l == "Yes" or l == "yes":
-        for i,t in enumerate(tscreenshots):
-            if i!=0:
-                lag=float(input("How many seconds of lag are there at "+str(datetime.timedelta(seconds=t+(i-1)*SCREENSHOTS_DURATION))+"? Type a negative number if you want the timestamp to go forward instead of backwards: "))
-                tscreenshots[i]=tscreenshots[i]-lag
-    else:
-        break
+        print("You didn't start recording")
+
     
 clip.close()
 os.remove(in_loc)
