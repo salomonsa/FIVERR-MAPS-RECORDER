@@ -67,6 +67,7 @@ with sync_playwright() as playwright:
     w = gw.getWindowsWithTitle('Google Maps - Google Chrome')[0]
     out = cv2.VideoWriter("output.mp4", fourcc, fps, tuple(w.size))
     seconds=0.0
+    numofscreenshots=0
     while True:
         while not recording:
             if keyboard.is_pressed("r") or keyboard.is_pressed("R"):
@@ -102,7 +103,8 @@ with sync_playwright() as playwright:
                     time.sleep(0.2)
                 if (keyboard.is_pressed("P") or keyboard.is_pressed("p")):
                     tscreenshots.append(seconds)
-                    print("\nScreenshot")
+                    numofscreenshots=numofscreenshots+1
+                    print("\nScreenshot "+str(numofscreenshots))
                     i=0
                 
                     for j,char in enumerate(page.url):
